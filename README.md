@@ -11,39 +11,56 @@
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-ea7a15?labelColor=30363d">
 </p>
 
-A small Python script that logs system CPU and memory usage to a file on a
-schedule. It depends on nothing but Python 3: it uses `psutil` if it happens to
-be installed, and otherwise reads Linux's `/proc` files directly.
+**CPU and memory usage, logged to a file on a schedule — one Python file, nothing to install.**
 
-## Requirements
+It uses `psutil` if it happens to be installed, and otherwise reads Linux's `/proc` files directly,
+so a bare Python 3 install is all you need.
 
-- Python 3.8 or newer
-- Linux or macOS (on Linux it works with no extra packages; on macOS or
-  Windows, install `psutil` with `pip install psutil`)
-- Optional: `pip install psutil` for more accurate readings
+<h3 align="center">
+  <a href="monitor.py">→ Download monitor.py</a>
+</h3>
 
-## Usage
+<p align="center">
+  One file, no package manager, no virtualenv, no config file.
+  <br>
+  Copy it anywhere, run it, read the log.
+</p>
 
-Run it from a terminal:
+## Contents
 
-```bash
-python3 monitor.py
+- [Why](#why)
+- [Quick start](#quick-start)
+- [Options](#options)
+- [Examples](#examples)
+- [How it works](#how-it-works)
+- [Good to know](#good-to-know)
+- [License](#license)
+
+## Why
+
+When a machine slows down, the useful question is never "is it slow now?" — it is "what was it doing
+when it started?" A single number you read after the fact tells you nothing. A file of numbers, taken
+every minute for a week, tells you the story.
+
+This script is that file. No agent to install, no dashboard to host, no time-series database: one
+line per sample, in a shape you can `grep`, plot, or paste into a spreadsheet.
+
+## Quick start
+
+1. Save [`monitor.py`](monitor.py) anywhere and open a terminal next to it.
+2. Run it: `python3 monitor.py`
+3. Watch `monitor.log` fill up in the same folder.
+
+That samples every 60 seconds and appends a line to `monitor.log`. Each line looks like this:
+
+```
+2026-11-16T17:39:29+00:00 cpu=   0.00% mem=   9.06% (355/3915 MB)
 ```
 
-That samples every 60 seconds, appending a line to `monitor.log` in the current
-directory. Each line looks like this:
+Timestamp, CPU percentage, memory percentage, and memory used out of total in MB — all separated by
+spaces, so the log is easy to grep or feed into a spreadsheet later. Stop it with `Ctrl+C`.
 
-```
-2026-11-16T17:39:29+00:00 cpu=  0.00% mem=  9.06% (355/3915 MB)
-```
-
-The timestamp, CPU percentage, memory percentage and memory used out of total
-(in MB) are separated by spaces, so the log is easy to grep or feed into a
-spreadsheet later.
-
-Stop it with `Ctrl+C`.
-
-### Options
+## Options
 
 | Option | Default | Meaning |
 | --- | --- | --- |
@@ -51,7 +68,7 @@ Stop it with `Ctrl+C`.
 | `-n`, `--samples` | `0` | Number of samples to take, then exit (`0` means run until stopped) |
 | `-l`, `--log` | `monitor.log` | File to append readings to |
 
-### Examples
+## Examples
 
 Take 12 readings, 5 seconds apart, then stop:
 
@@ -71,19 +88,26 @@ Run it in the background and keep a record overnight:
 nohup python3 monitor.py --interval 300 --log overnight.log &
 ```
 
-## Notes
+## How it works
 
-- The log file is appended to, never overwritten, so you can restart the script
-  without losing history. A header line is written the first time the file is
-  created.
-- `monitor.log` is listed in `.gitignore` so your collected readings stay out of
-  version control.
-- The script stays quiet apart from the readings it prints and logs; it does not
-  rotate or trim the log file, so delete or rotate it yourself if you run it for
-  a long time.
+- `psutil`, when present, gives exact per-process and system totals in one call.
+- Without it, the script reads `/proc/stat` twice and takes the difference to get CPU percentage, and
+  `/proc/meminfo` for used and total memory.
+- If neither is available (macOS or Windows without `psutil`), it exits with a clear message instead
+  of logging wrong numbers.
 
-## Tags
+Pick whichever path is available, sample on a timer, append one formatted line, flush. That is the
+whole program.
 
-#Python #Monitoring #Linux #SysAdmin #CLI #OpenSource #NoDependencies
+## Good to know
 
-`python` `system-monitor` `monitoring` `cpu` `memory` `logging` `cli` `linux` `sysadmin` `open-source` `no-dependencies` `single-file`
+- The log file is appended to, never overwritten, so you can restart the script without losing
+  history. A header line is written the first time the file is created.
+- `monitor.log` is listed in `.gitignore`, so your collected readings stay out of version control.
+- On macOS or Windows, install `psutil` with `pip install psutil` — `/proc` only exists on Linux.
+- The script stays quiet apart from the readings it prints and logs; it does not rotate or trim the
+  log file, so delete or rotate it yourself if you run it for a long time.
+
+## License
+
+[MIT](LICENSE) © 2026 moonspiid — use it, modify it, ship it.
